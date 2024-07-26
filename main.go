@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // format struktur karyawan
 type Karyawan struct {
@@ -14,25 +17,58 @@ type Karyawan struct {
 //fungsi CRUD karyawan
 
 // Ini fungsi untuk menambahkan karyawan ke slice utama
-func TambahKaryawan(karyawanBaru Karyawan, karyawan []Karyawan) []Karyawan {
-	karyawan = append(karyawan, karyawanBaru)
-	return karyawan
+func TambahKaryawan(karyawanBaru Karyawan, karyawan *[]Karyawan) {
+	*karyawan = append(*karyawan, karyawanBaru)
 }
 
-func DisplayKaryawan(karyawan []Karyawan) {
-	fmt.Println(karyawan)
+func DisplayKaryawan(karyawan *[]Karyawan) {
+	fmt.Println(*karyawan)
 }
 
-// func HapusKaryawan(id int) int {
-// 	return 1
-// }
+func HapusKaryawan(id int, karyawan *[]Karyawan) error {
 
-// func PerbaruiKaryawan(id int) {}
+	if len(*karyawan) == 0 {
+		return errors.New("data karyawan tidak ditemukan")
+	}
 
-func CariKaryawan(nama *string, usia *int, jabatan *string, karyawan []Karyawan) any {
+	for i, individu := range *karyawan {
+		if individu.ID == id {
+			(*karyawan)[i] = (*karyawan)[len(*karyawan)-1]
+			*karyawan = (*karyawan)[:len(*karyawan)-1]
+			return nil
+		}
+	}
+
+	return errors.New("data karyawan tidak ditemukan")
+
+}
+
+func PerbaruiKaryawan(id int, nama *string, usia *int, jabatan *string, karyawan *[]Karyawan) error {
+	//cari karyawan berdasarkan id
+	for i := range *karyawan {
+		if (*karyawan)[i].ID == id {
+			if nama != nil {
+				(*karyawan)[i].Nama = *nama
+			}
+			if usia != nil {
+				(*karyawan)[i].Usia = *usia
+			}
+			if jabatan != nil {
+				(*karyawan)[i].Jabatan = *jabatan
+			}
+			return nil
+		}
+	}
+	return errors.New("data karyawan tidak ditemukan")
+}
+
+func CariKaryawan(id *int, nama *string, usia *int, jabatan *string, karyawan *[]Karyawan) ([]Karyawan, error) {
 	listHasil := []Karyawan{}
-	for _, individu := range karyawan {
+	for _, individu := range *karyawan {
 		matched := true
+		if id != nil && *id != individu.ID {
+			matched = false
+		}
 		if nama != nil && *nama != individu.Nama {
 			matched = false
 		}
@@ -47,23 +83,39 @@ func CariKaryawan(nama *string, usia *int, jabatan *string, karyawan []Karyawan)
 		}
 	}
 	if len(listHasil) == 0 {
-		return nil
+		return nil, errors.New("data karyawan tidak ditemukan")
 	}
 
-	return listHasil
+	return listHasil, nil
 }
 
 func main() {
 	dataKaryawan := []Karyawan{}
-	dataKaryawan = TambahKaryawan(Karyawan{ID: 1, Nama: "rieco hilman", Usia: 23, Jabatan: "junior", Gaji: 2000000}, dataKaryawan)
-	DisplayKaryawan(dataKaryawan)
+	TambahKaryawan(Karyawan{ID: 1, Nama: "rieco hilman", Usia: 18, Jabatan: "junior", Gaji: 2000000}, &dataKaryawan)
+	DisplayKaryawan(&dataKaryawan)
 
-	dataKaryawan = TambahKaryawan(Karyawan{ID: 2, Nama: "relieyan hilman", Usia: 23, Jabatan: "Senior", Gaji: 5000000}, dataKaryawan)
+	// TambahKaryawan(Karyawan{ID: 2, Nama: "relieyan hilman", Usia: 23, Jabatan: "Senior", Gaji: 5000000}, &dataKaryawan)
+	// DisplayKaryawan(&dataKaryawan)
+	namaLengkap := "Relieyan Ramadhan Hilman"
 
-	// namaDicari := "relieyan hilman"
-	usiaDicari := 23
-	// jabatanDicari := "Senior"
+	err := PerbaruiKaryawan(2, &namaLengkap, nil, nil, &dataKaryawan)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	// DisplayKaryawan(&dataKaryawan)
 
-	pencarianKaryawan := CariKaryawan(nil, &usiaDicari, nil, dataKaryawan)
-	fmt.Println("hasil pencarian: ", pencarianKaryawan)
+	err = HapusKaryawan(2, &dataKaryawan)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	usiaYangDIcari := 15
+	cariKaryawanUsia23, err := CariKaryawan(nil, nil, &usiaYangDIcari, nil, &dataKaryawan)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	fmt.Println("Hasil Pencarian:", cariKaryawanUsia23)
+
+	DisplayKaryawan(&dataKaryawan)
+
 }
