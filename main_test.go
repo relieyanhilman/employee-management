@@ -3,12 +3,19 @@ package main
 import (
 	"errors"
 	"testing"
+
+	"github.com/relieyanhilman/latihan1_pengelolaanDataKaryawan/employee"
 )
 
 func TestTambahKaryawan(t *testing.T) {
-	kumpulanKaryawan := []Karyawan{}
-	karyawanBaru := Karyawan{1, "afu arifan", 25, "mobile app developer", 6000000}
-	TambahKaryawan(karyawanBaru, &kumpulanKaryawan)
+	kumpulanKaryawan := []employee.Karyawan{}
+	karyawanBaru := employee.Karyawan{
+		ID:      1,
+		Nama:    "afu arifan",
+		Usia:    25,
+		Jabatan: "mobile app developer",
+		Gaji:    6000000}
+	employee.TambahKaryawan(karyawanBaru, &kumpulanKaryawan)
 	if len(kumpulanKaryawan) != 1 {
 		t.Fatalf("jumlah karyawan sekarang seharusnya 1, tapi kita mendapatkan %d", len(kumpulanKaryawan))
 	}
@@ -37,30 +44,30 @@ func TestTambahKaryawan(t *testing.T) {
 func TestHapusKaryawan(t *testing.T) {
 	tests := []struct {
 		name          string
-		initialData   []Karyawan
+		initialData   []employee.Karyawan
 		idToDelete    int
-		expectedData  []Karyawan
+		expectedData  []employee.Karyawan
 		expectedError error
 	}{
 		{
 			name:          "Hapus dari daftar kosong",
-			initialData:   []Karyawan{},
+			initialData:   []employee.Karyawan{},
 			idToDelete:    1,
-			expectedData:  []Karyawan{},
+			expectedData:  []employee.Karyawan{},
 			expectedError: errors.New("data karyawan tidak ditemukan"),
 		},
 		{
 			name:          "Hapus karyawan yang ada",
-			initialData:   []Karyawan{{ID: 1, Nama: "Afu Arifan", Usia: 25, Jabatan: "Developer", Gaji: 6000000}},
+			initialData:   []employee.Karyawan{{ID: 1, Nama: "Afu Arifan", Usia: 25, Jabatan: "Developer", Gaji: 6000000}},
 			idToDelete:    1,
-			expectedData:  []Karyawan{},
+			expectedData:  []employee.Karyawan{},
 			expectedError: nil,
 		},
 		{
 			name:          "Hapus karyawan yang tidak ada",
-			initialData:   []Karyawan{{ID: 1, Nama: "Afu Arifan", Usia: 25, Jabatan: "Developer", Gaji: 6000000}},
+			initialData:   []employee.Karyawan{{ID: 1, Nama: "Afu Arifan", Usia: 25, Jabatan: "Developer", Gaji: 6000000}},
 			idToDelete:    2,
-			expectedData:  []Karyawan{{ID: 1, Nama: "Afu Arifan", Usia: 25, Jabatan: "Developer", Gaji: 6000000}},
+			expectedData:  []employee.Karyawan{{ID: 1, Nama: "Afu Arifan", Usia: 25, Jabatan: "Developer", Gaji: 6000000}},
 			expectedError: errors.New("data karyawan tidak ditemukan"),
 		},
 	}
@@ -68,7 +75,7 @@ func TestHapusKaryawan(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dataKaryawan := tt.initialData
-			err := HapusKaryawan(tt.idToDelete, &dataKaryawan)
+			err := employee.HapusKaryawan(tt.idToDelete, &dataKaryawan)
 
 			if err != nil && err.Error() != tt.expectedError.Error() {
 				t.Errorf("Expected error %v, got %v", tt.expectedError, err)
@@ -90,42 +97,46 @@ func TestHapusKaryawan(t *testing.T) {
 func TestPerbaruiKaryawan(t *testing.T) {
 	tests := []struct {
 		name          string
-		initialData   []Karyawan
+		initialData   []employee.Karyawan
 		idToUpdate    int
 		nama          *string
 		usia          *int
 		jabatan       *string
-		expectedData  []Karyawan
+		gaji          *float64
+		expectedData  []employee.Karyawan
 		expectedError error
 	}{
 		{
 			name:          "Perbarui karyawan yang ada - semua data",
-			initialData:   []Karyawan{{ID: 1, Nama: "Afu Arifan", Usia: 25, Jabatan: "Developer", Gaji: 6000000}},
+			initialData:   []employee.Karyawan{{ID: 1, Nama: "Afu Arifan", Usia: 25, Jabatan: "Developer", Gaji: 6000000}},
 			idToUpdate:    1,
 			nama:          stringPointer("Afu Arifan Updated"),
 			usia:          intPointer(26),
 			jabatan:       stringPointer("Senior Developer"),
-			expectedData:  []Karyawan{{ID: 1, Nama: "Afu Arifan Updated", Usia: 26, Jabatan: "Senior Developer", Gaji: 6000000}},
+			gaji:          float64Pointer(20000000),
+			expectedData:  []employee.Karyawan{{ID: 1, Nama: "Afu Arifan Updated", Usia: 26, Jabatan: "Senior Developer", Gaji: 20000000}},
 			expectedError: nil,
 		},
 		{
 			name:          "Perbarui karyawan yang ada - sebagian data",
-			initialData:   []Karyawan{{ID: 2, Nama: "Budi", Usia: 30, Jabatan: "Manager", Gaji: 8000000}},
+			initialData:   []employee.Karyawan{{ID: 2, Nama: "Budi", Usia: 30, Jabatan: "Manager", Gaji: 8000000}},
 			idToUpdate:    2,
 			nama:          nil,
 			usia:          intPointer(31),
 			jabatan:       nil,
-			expectedData:  []Karyawan{{ID: 2, Nama: "Budi", Usia: 31, Jabatan: "Manager", Gaji: 8000000}},
+			gaji:          float64Pointer(10000000),
+			expectedData:  []employee.Karyawan{{ID: 2, Nama: "Budi", Usia: 31, Jabatan: "Manager", Gaji: 10000000}},
 			expectedError: nil,
 		},
 		{
 			name:          "Perbarui karyawan yang tidak ada",
-			initialData:   []Karyawan{{ID: 3, Nama: "Cici", Usia: 22, Jabatan: "Intern", Gaji: 4000000}},
+			initialData:   []employee.Karyawan{{ID: 3, Nama: "Cici", Usia: 22, Jabatan: "Intern", Gaji: 4000000}},
 			idToUpdate:    4,
 			nama:          stringPointer("Dewi"),
 			usia:          intPointer(23),
 			jabatan:       stringPointer("Junior Developer"),
-			expectedData:  []Karyawan{{ID: 3, Nama: "Cici", Usia: 22, Jabatan: "Intern", Gaji: 4000000}},
+			gaji:          float64Pointer(10000000),
+			expectedData:  []employee.Karyawan{{ID: 3, Nama: "Cici", Usia: 22, Jabatan: "Intern", Gaji: 4000000}},
 			expectedError: errors.New("data karyawan tidak ditemukan"),
 		},
 	}
@@ -133,7 +144,7 @@ func TestPerbaruiKaryawan(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dataKaryawan := tt.initialData
-			err := PerbaruiKaryawan(tt.idToUpdate, tt.nama, tt.usia, tt.jabatan, &dataKaryawan)
+			err := employee.PerbaruiKaryawan(tt.idToUpdate, tt.nama, tt.usia, tt.jabatan, tt.gaji, &dataKaryawan)
 
 			if (err != nil && tt.expectedError == nil) || (err == nil && tt.expectedError != nil) {
 				t.Fatalf("Expected error %v, got %v", tt.expectedError, err)
@@ -159,57 +170,57 @@ func TestPerbaruiKaryawan(t *testing.T) {
 func TestCariKaryawan(t *testing.T) {
 	tests := []struct {
 		name          string
-		initialData   []Karyawan
+		initialData   []employee.Karyawan
 		id            *int
 		nama          *string
 		usia          *int
 		jabatan       *string
-		expectedData  []Karyawan
+		expectedData  []employee.Karyawan
 		expectedError error
 	}{
 		{
 			name:          "Cari karyawan berdasarkan ID",
-			initialData:   []Karyawan{{ID: 1, Nama: "Afu Arifan", Usia: 25, Jabatan: "Developer", Gaji: 6000000}},
+			initialData:   []employee.Karyawan{{ID: 1, Nama: "Afu Arifan", Usia: 25, Jabatan: "Developer", Gaji: 6000000}},
 			id:            intPointer(1),
 			nama:          nil,
 			usia:          nil,
 			jabatan:       nil,
-			expectedData:  []Karyawan{{ID: 1, Nama: "Afu Arifan", Usia: 25, Jabatan: "Developer", Gaji: 6000000}},
+			expectedData:  []employee.Karyawan{{ID: 1, Nama: "Afu Arifan", Usia: 25, Jabatan: "Developer", Gaji: 6000000}},
 			expectedError: nil,
 		},
 		{
 			name:          "Cari karyawan berdasarkan nama",
-			initialData:   []Karyawan{{ID: 2, Nama: "Budi", Usia: 30, Jabatan: "Manager", Gaji: 8000000}},
+			initialData:   []employee.Karyawan{{ID: 2, Nama: "Budi", Usia: 30, Jabatan: "Manager", Gaji: 8000000}},
 			id:            nil,
 			nama:          stringPointer("Budi"),
 			usia:          nil,
 			jabatan:       nil,
-			expectedData:  []Karyawan{{ID: 2, Nama: "Budi", Usia: 30, Jabatan: "Manager", Gaji: 8000000}},
+			expectedData:  []employee.Karyawan{{ID: 2, Nama: "Budi", Usia: 30, Jabatan: "Manager", Gaji: 8000000}},
 			expectedError: nil,
 		},
 		{
 			name:          "Cari karyawan berdasarkan jabatan",
-			initialData:   []Karyawan{{ID: 3, Nama: "Cici", Usia: 22, Jabatan: "Intern", Gaji: 4000000}},
+			initialData:   []employee.Karyawan{{ID: 3, Nama: "Cici", Usia: 22, Jabatan: "Intern", Gaji: 4000000}},
 			id:            nil,
 			nama:          nil,
 			usia:          nil,
 			jabatan:       stringPointer("Intern"),
-			expectedData:  []Karyawan{{ID: 3, Nama: "Cici", Usia: 22, Jabatan: "Intern", Gaji: 4000000}},
+			expectedData:  []employee.Karyawan{{ID: 3, Nama: "Cici", Usia: 22, Jabatan: "Intern", Gaji: 4000000}},
 			expectedError: nil,
 		},
 		{
 			name:          "Cari karyawan berdasarkan kombinasi parameter",
-			initialData:   []Karyawan{{ID: 4, Nama: "Dewi", Usia: 23, Jabatan: "Junior Developer", Gaji: 5000000}},
+			initialData:   []employee.Karyawan{{ID: 4, Nama: "Dewi", Usia: 23, Jabatan: "Junior Developer", Gaji: 5000000}},
 			id:            intPointer(4),
 			nama:          stringPointer("Dewi"),
 			usia:          intPointer(23),
 			jabatan:       stringPointer("Junior Developer"),
-			expectedData:  []Karyawan{{ID: 4, Nama: "Dewi", Usia: 23, Jabatan: "Junior Developer", Gaji: 5000000}},
+			expectedData:  []employee.Karyawan{{ID: 4, Nama: "Dewi", Usia: 23, Jabatan: "Junior Developer", Gaji: 5000000}},
 			expectedError: nil,
 		},
 		{
 			name:          "Karyawan tidak ditemukan",
-			initialData:   []Karyawan{{ID: 5, Nama: "Eko", Usia: 28, Jabatan: "Senior Developer", Gaji: 9000000}},
+			initialData:   []employee.Karyawan{{ID: 5, Nama: "Eko", Usia: 28, Jabatan: "Senior Developer", Gaji: 9000000}},
 			id:            intPointer(6),
 			nama:          nil,
 			usia:          nil,
@@ -222,7 +233,7 @@ func TestCariKaryawan(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dataKaryawan := tt.initialData
-			result, err := CariKaryawan(tt.id, tt.nama, tt.usia, tt.jabatan, &dataKaryawan)
+			result, err := employee.CariKaryawan(tt.id, tt.nama, tt.usia, tt.jabatan, &dataKaryawan)
 
 			if (err != nil && tt.expectedError == nil) || (err == nil && tt.expectedError != nil) {
 				t.Fatalf("Expected error %v, got %v", tt.expectedError, err)
@@ -251,4 +262,8 @@ func stringPointer(s string) *string {
 
 func intPointer(i int) *int {
 	return &i
+}
+
+func float64Pointer(p float64) *float64 {
+	return &p
 }
