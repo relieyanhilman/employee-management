@@ -1,121 +1,111 @@
 package main
 
 import (
-	"errors"
+	"bufio"
 	"fmt"
+	"os"
+	"strings"
+
+	"github.com/relieyanhilman/latihan1_pengelolaanDataKaryawan/cmd"
+	"github.com/urfave/cli/v2"
 )
 
-// format struktur karyawan
-type Karyawan struct {
-	ID      int
-	Nama    string
-	Usia    int
-	Jabatan string
-	Gaji    float64
-}
-
-//fungsi CRUD karyawan
-
-// Ini fungsi untuk menambahkan karyawan ke slice utama
-func TambahKaryawan(karyawanBaru Karyawan, karyawan *[]Karyawan) {
-	*karyawan = append(*karyawan, karyawanBaru)
-}
-
-func DisplayKaryawan(karyawan *[]Karyawan) {
-	fmt.Println(*karyawan)
-}
-
-func HapusKaryawan(id int, karyawan *[]Karyawan) error {
-
-	if len(*karyawan) == 0 {
-		return errors.New("data karyawan tidak ditemukan")
-	}
-
-	for i, individu := range *karyawan {
-		if individu.ID == id {
-			(*karyawan)[i] = (*karyawan)[len(*karyawan)-1]
-			*karyawan = (*karyawan)[:len(*karyawan)-1]
-			return nil
-		}
-	}
-
-	return errors.New("data karyawan tidak ditemukan")
-
-}
-
-func PerbaruiKaryawan(id int, nama *string, usia *int, jabatan *string, karyawan *[]Karyawan) error {
-	//cari karyawan berdasarkan id
-	for i := range *karyawan {
-		if (*karyawan)[i].ID == id {
-			if nama != nil {
-				(*karyawan)[i].Nama = *nama
-			}
-			if usia != nil {
-				(*karyawan)[i].Usia = *usia
-			}
-			if jabatan != nil {
-				(*karyawan)[i].Jabatan = *jabatan
-			}
-			return nil
-		}
-	}
-	return errors.New("data karyawan tidak ditemukan")
-}
-
-func CariKaryawan(id *int, nama *string, usia *int, jabatan *string, karyawan *[]Karyawan) ([]Karyawan, error) {
-	listHasil := []Karyawan{}
-	for _, individu := range *karyawan {
-		matched := true
-		if id != nil && *id != individu.ID {
-			matched = false
-		}
-		if nama != nil && *nama != individu.Nama {
-			matched = false
-		}
-		if usia != nil && *usia != individu.Usia {
-			matched = false
-		}
-		if jabatan != nil && *jabatan != individu.Jabatan {
-			matched = false
-		}
-		if matched {
-			listHasil = append(listHasil, individu)
-		}
-	}
-	if len(listHasil) == 0 {
-		return nil, errors.New("data karyawan tidak ditemukan")
-	}
-
-	return listHasil, nil
-}
-
 func main() {
-	dataKaryawan := []Karyawan{}
-	TambahKaryawan(Karyawan{ID: 1, Nama: "rieco hilman", Usia: 18, Jabatan: "junior", Gaji: 2000000}, &dataKaryawan)
-	DisplayKaryawan(&dataKaryawan)
-
-	// TambahKaryawan(Karyawan{ID: 2, Nama: "relieyan hilman", Usia: 23, Jabatan: "Senior", Gaji: 5000000}, &dataKaryawan)
-	// DisplayKaryawan(&dataKaryawan)
-	namaLengkap := "Relieyan Ramadhan Hilman"
-
-	err := PerbaruiKaryawan(2, &namaLengkap, nil, nil, &dataKaryawan)
-	if err != nil {
-		fmt.Println("Error:", err)
+	app := &cli.App{
+		Name:  "employee-management",
+		Usage: "Manajemen data karyawan",
+		Commands: []*cli.Command{
+			{
+				Name:   "tambah",
+				Usage:  "Menambah karyawan baru",
+				Action: cmd.TambahKaryawanCmd,
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "nama", Usage: "Nama karyawan", Required: true},
+					&cli.IntFlag{Name: "usia", Usage: "Usia karyawan", Required: true},
+					&cli.StringFlag{Name: "jabatan", Usage: "Jabatan karyawan", Required: true},
+					&cli.Float64Flag{Name: "gaji", Usage: "Gajikaryawan", Required: true},
+				},
+			},
+			{
+				Name:   "list",
+				Usage:  "Menampilkan daftar karyawan",
+				Action: cmd.DisplayKaryawanCmd,
+			},
+			{
+				Name:   "hapus",
+				Usage:  "Menghapus karyawan berdasarkan ID",
+				Action: cmd.HapusKaryawanCmd,
+				Flags: []cli.Flag{
+					&cli.IntFlag{Name: "id", Usage: "ID karyawan yang akan dihapus", Required: true},
+				},
+			},
+			{
+				Name:   "update",
+				Usage:  "Memperbarui data karyawan",
+				Action: cmd.PerbaruiKaryawanCmd,
+				Flags: []cli.Flag{
+					&cli.IntFlag{Name: "id", Usage: "ID karyawan", Required: true},
+					&cli.StringFlag{Name: "nama", Usage: "Nama karyawan"},
+					&cli.IntFlag{Name: "usia", Usage: "Usia karyawan"},
+					&cli.StringFlag{Name: "jabatan", Usage: "Jabatan karyawan"},
+					&cli.Float64Flag{Name: "gaji", Usage: "Gaji karyawan"},
+				},
+			},
+		},
 	}
-	// DisplayKaryawan(&dataKaryawan)
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Print("Enter command: ")
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Error reading input:", err)
+			continue
+		}
 
-	err = HapusKaryawan(2, &dataKaryawan)
-	if err != nil {
-		fmt.Println("Error:", err)
+		// Remove the newline character
+		input = strings.TrimSpace(input)
+
+		if input == "exit" {
+			fmt.Println("Exiting...")
+			break
+		}
+		// kode di bawah ini yang perlu dimodifikasi untuk bisa mencegah
+		// bug string pake spasi yang dianggap command yang berbeda
+		args := parseArgs(input)
+		err = app.Run(args)
+		if err != nil {
+			fmt.Println("Error executing command:", err)
+		}
+	}
+}
+
+func parseArgs(input string) []string {
+	var args []string
+	var currentArg strings.Builder
+	inQuotes := false
+
+	for _, char := range input {
+		switch char {
+		case ' ':
+			if inQuotes {
+				currentArg.WriteRune(char)
+			} else {
+				if currentArg.Len() > 0 {
+					args = append(args, currentArg.String())
+					currentArg.Reset()
+				}
+			}
+		case '"':
+			inQuotes = !inQuotes
+		default:
+			currentArg.WriteRune(char)
+		}
 	}
 
-	usiaYangDIcari := 15
-	cariKaryawanUsia23, err := CariKaryawan(nil, nil, &usiaYangDIcari, nil, &dataKaryawan)
-	if err != nil {
-		fmt.Println("Error:", err)
+	if currentArg.Len() > 0 {
+		args = append(args, currentArg.String())
 	}
-	fmt.Println("Hasil Pencarian:", cariKaryawanUsia23)
 
-	DisplayKaryawan(&dataKaryawan)
-
+	// Adding a fake "cli-app" as the first argument
+	return append([]string{"cli-app"}, args...)
 }
